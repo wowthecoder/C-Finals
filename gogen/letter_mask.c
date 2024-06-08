@@ -3,6 +3,11 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+
+// Create mask of last 7 bits 1, then invert it to get desired value (all bits 1 and last 7 bits 0)
+// a 32 bit mask with last 7 bits 1 is 0...0111 1111, so 0x7F
+#define SEVEN_BITMASK ~0x7F
+
 // ################################## PART A ##################################
 
 void print_bitmask(letter_mask_t mask) {
@@ -40,9 +45,7 @@ void set_bit_value(letter_mask_t *mask, int row, int col, bool value) {
 // ################################ QUESTION 3 ################################
 void set_all_bits(letter_mask_t *mask, bool value) {
     if (value) {
-        // Create mask of last 7 bits 1, then invert it to get desired value (all bits 1 and last 7 bits 0)
-        // a 32 bit mask with last 7 bits 1 is 0...0111 1111, so 0x7F
-        *mask = ~0x7F;
+        *mask = SEVEN_BITMASK;
     } else {
         *mask = 0;
     }
@@ -80,8 +83,40 @@ bool get_fixed_letter_pos(letter_mask_t mask, int *row, int *col) {
     return true;
 }
 
+// helper method to shift the board left, right, up, down, and then left + up/down, right + up/down (mode 1-8)
+static letter_mask_t shift_board(letter_mask_t mask, int mode) {
+    switch (mode) {
+        case 1: // shift left
+            return mask << 1;
+        case 2: // shift right
+            return (mask >> 1) & SEVEN_BITMASK;
+        case 3: // shift up
+            return mask << WIDTH;
+        case 4: // shift down
+            return (mask >> WIDTH) & SEVEN_BITMASK;
+        default:
+            return mask;
+    }
+}
+
 // ################################ QUESTION 6 ################################
 void intersect_neighbourhoods(letter_mask_t *fst, letter_mask_t *snd) {
+    letter_mask_t fst_neighbourhood = *fst, snd_neighbourhood = *snd;
+    // 8 directions: left, right, up, down, left + up/down, right + up/down
+    for (int i = 1; i <= 4; i++) {
+        letter_mask_t f1 = shift_board(*fst, i);
+        letter_mask_t s1 = shift_board(*snd, i);
+        fst_neighbourhood |= f1;
+        snd_neighbourhood |= s1;
+        if (i < 3) {
+            for (int j = 3; j <= 4; j++) {
+                fst_neighbourhood |= shift_board(f1, j);
+                snd_neighbourhood |= shift_board(s1, j);
+            }
+        }
+    }
+    *fst &= snd_neighbourhood;
+    *snd &= fst_neighbourhood;
 }
 
 #ifdef MAIN_LETTER_MASK
