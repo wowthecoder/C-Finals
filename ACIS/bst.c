@@ -33,7 +33,15 @@ struct bst
 bst make_empty_bst( bst_printkv_func pf, bst_freev_func ff )
 {
 	// TASK 3a: IMPLEMENT THIS.
-	return NULL;
+	bst new_bst = malloc(sizeof(struct bst));
+	if (new_bst == NULL) {
+		return NULL;
+	}
+
+	new_bst->pf = pf;
+	new_bst->ff = ff;
+	new_bst->t = NULL;
+	return new_bst;
 }
 
 
@@ -44,10 +52,34 @@ bst make_empty_bst( bst_printkv_func pf, bst_freev_func ff )
 //
 static bintree makenode( char *key, void *value )
 {
-	// TASK 3b: IMPLEMENT THIS.
-	return NULL;
+	char *new_key = strdup(key);
+	bintree node = malloc(sizeof(struct bintree));
+	if (new_key == NULL || node == NULL) {
+		return NULL;
+	}
+	node->key = new_key;
+	node->value = value;
+	node->left = NULL;
+	node->right = NULL;
+	return node;
 }
 
+static bintree add_bintree(bintree t, char *key, void *value, bst_freev_func ff) {
+	if (t == NULL) {
+		t = makenode(key, value);
+		return t;
+	}
+	int cmp = strcmp(key, t->key);
+	if (cmp == 0) { // free old value and replace with new value
+		free ( t->value );
+		t->value = value;
+	} else if (cmp > 0) {
+		t->right = add_bintree(t->right, key, value, ff);
+	} else {
+		t->left = add_bintree(t->left, key, value, ff);
+	}
+	return t;
+}
 
 // add_bst( b, key, value );
 //	Add (<key>,<value>) to <b>.  If the given key is already present,
@@ -58,9 +90,8 @@ static bintree makenode( char *key, void *value )
 //
 void add_bst( bst b, char *key, void *value )
 {
-	// TASK 3c: IMPLEMENT THIS.
+	b->t = add_bintree(b->t, key, value, b->ff);
 }
-
 
 // bintree result = find( t, k );
 //	If <k> is not in <t>, return null.
@@ -72,7 +103,7 @@ static bintree find( bintree t, char *k )
 	while( t != NULL )
 	{
 		int cmp = strcmp( k, t->key );
-	if( cmp == 0 ) return t;
+		if( cmp == 0 ) return t;
 		t = ( cmp<0 ) ? t->left : t->right;
 	}
 	return NULL;

@@ -14,11 +14,28 @@
 #include "everyline.h"
 #include "match.h"
 
+static analysis a;
+
+static void print_wrapper( FILE *out, char *key, void *value )
+{
+	fprintf( out, "%s=>", key );
+	print_set( value, out );	// value is itself a set
+}
+
+
+static void free_wrapper( void *value )
+{
+	free_set( (set)value );
+}
 
 static void recordmain( char *filename )
 {
 	printf( "debug: %s contains main()\n", filename );
 	// TASK 4: build mainset.
+	if (a->mainset == NULL) {
+		a->mainset = make_set();
+	}
+	add_set(a->mainset, filename);
 }
 
 
@@ -26,13 +43,27 @@ static void recordfileexists( char *filename )
 {
 	printf( "debug: file %s exists\n", filename );
 	// TASK 4: build existset.
+	if (a->existset == NULL) {
+		a->existset = make_set();
+	}
+	add_set(a->existset, filename);
 }
-
 
 static void recordinclude( char *filename, char *oneinc )
 {
 	printf( "debug: %s directly includes %s\n", filename, oneinc );
 	// TASK 4: build c2inc.
+	if (a->c2inc == NULL) {
+		a->c2inc = make_empty_bst(&print_wrapper, &free_wrapper);
+	}
+	set includeset;
+	if (in_bst(a->c2inc, filename)) {
+		includeset = get_bst(a->c2inc, filename);
+		add_set(includeset, oneinc);
+	} else {
+		includeset = make_set_from_string(oneinc, ',');
+		add_bst(a->c2inc, filename, includeset);
+	}
 }
 
 
@@ -59,23 +90,9 @@ static void examineline( char *filename, int ln, char *line )
 	}
 }
 
-
-static void print_wrapper( FILE *out, char *key, void *value )
-{
-	fprintf( out, "%s=>", key );
-	print_set( value, out );	// value is itself a set
-}
-
-
-static void free_wrapper( void *value )
-{
-	free_set( (set)value );
-}
-
-
 static analysis make_analysis( void )
 {
-	analysis a = malloc( sizeof(struct analysis) );
+	a = malloc( sizeof(struct analysis) );
 	assert( a != NULL );
 	a->existset = NULL;
 	a->mainset = NULL;
@@ -86,7 +103,7 @@ static analysis make_analysis( void )
 
 analysis analyse( void )
 {
-	analysis a = make_analysis();
+	a = make_analysis();
 
 	glob_t globbuf;
 	glob( "*.[ch]", 0, NULL, &globbuf );

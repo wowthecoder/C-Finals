@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "everyline.h"
 
@@ -18,6 +19,15 @@
 //
 int foreveryline( char *filename, everylinecb eachlinef )
 {
-	// TASK 1: IMPLEMENT THIS
-	return -1;
+	FILE *f = fopen(filename, "r");
+	if (f == NULL) {
+		return -1;
+	}
+	char buffer[200]; // Assume each line is <200 characters long
+	int lineno = 0;
+	while (fgets(buffer, sizeof(buffer), f) != NULL) {
+		(*eachlinef)(filename, ++lineno, buffer);
+	}
+	fclose(f);
+	return lineno;
 }

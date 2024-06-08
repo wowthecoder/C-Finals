@@ -27,6 +27,21 @@
 //
 char * matchwords( char *target, char **wds )
 {
-	// TASK 2: IMPLEMENT THIS
-	return NULL;
+	char *head = target;
+	while (*wds != NULL) {
+		while ( isspace(*head) ) head++;
+		// now head is a non-space character
+		int len = strlen(*wds);
+		if (strncmp(head, *wds, len) != 0) {
+			// printf("head is %s\n", head);
+			// printf("*wds is %s\n", *wds);
+			return NULL;
+		} else {
+			head += len;
+			// printf("matched, head is moved to %s\n", head);
+		}
+		wds++;
+	}
+	while ( isspace(*head) ) head++;
+	return head;
 }
