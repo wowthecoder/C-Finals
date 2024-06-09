@@ -72,16 +72,82 @@ void copy_board(board_t dest, board_t src) {
 
 // ################################ QUESTION 1 ################################
 bool get_letter_position(board_t board, char letter, int *row, int *col) {
+    for (int r = 0; r < HEIGHT; r++ ) {
+        for (int c = 0; c < WIDTH; c++) {
+            if (board[r][c] == letter) {
+                *row = r;
+                *col = c;
+                return true;
+            }
+        }
+    }
     return false;
 }
 
 // ################################ QUESTION 2 ################################
 bool valid_solution(board_t board, char **words) {
-    return false;
+    // 1st condition: all letters from A to Y appears once
+    char appeared[25];
+    for (int r = 0; r < HEIGHT; r++) {
+        for (int c = 0; c < WIDTH; c++) {
+            char ch = board[r][c];
+            if (ch < 'A' || ch > 'Y' || strchr(appeared, ch) != NULL) {
+                return false;
+            }
+            appeared[ch - 'A'] = ch;
+        }
+    }
+    // 2nd condition: all words in board
+    while (*words != NULL) {
+        // for the current word, do this:
+        char *curr = *words;
+        // store position of prev character
+        int r_prev = -1, c_prev = -1;
+        // *curr is the current char
+        while (*curr != 0) {
+            int r_curr, c_curr;
+            bool found = get_letter_position(board, *curr, &r_curr, &c_curr);
+            if (!found) {
+                return false;
+            }
+            if (r_prev != -1 && c_prev != -1 && abs(r_prev - r_curr) > 1 && abs(c_prev - c_curr) > 1) {
+                return false;
+            }
+            r_prev = r_curr;
+            c_prev = c_curr;
+            curr++;
+        }
+        words++;
+    }
+    return true;
 }
 
 // ################################ QUESTION 3 ################################
 void update(board_t board, letter_mask_t masks[NUM_LETTERS]) {
+    for (int i = 0; i < NUM_LETTERS; i++) {
+        char ch = 'A' + i;
+        // ch exists on the board
+        int row, col;
+        bool found = get_letter_position(board, ch, &row, &col);
+        if (found) {
+            set_all_bits(&masks[i], false);
+            set_bit_value(&masks[i], row, col, true);
+        } else { // ch does not exist on the board
+            for (int r = 0; r < HEIGHT; r++) {
+                for (int c = 0; c < WIDTH; c++) {
+                    if (board[r][c] >= 'A' && board[r][c] <= 'Y') {
+                        set_bit_value(&masks[i], r, c, false);
+                    }
+                }
+            }
+            // if the mask is now in a fixed position (only 1 bits set) 
+            if (!is_free_letter(masks[i])) {
+                int frow, fcol;
+                get_fixed_letter_pos(masks[i], &frow, &fcol);
+                board[frow][fcol] = ch;
+            }
+        }
+    }
 }
 
 // ################################ QUESTION 4 ################################
