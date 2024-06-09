@@ -78,6 +78,18 @@ void test_valid_solution() {
     assert_eq(valid_solution(solution_wrong2, words), false);
 }
 
+void test_valid_challenge_solution() {
+    board_t solution_correct = {"GPMRW", "NOXIS", "UATYV", "QHDEB", "KJFLC"};
+    board_t solution_wrong1 = {"GPUQW", "NOVIS", "JAMRB", "HDTYX", "KFELC"}; // my algo's prev solution
+    char *words[14] = { "BYTE", "CLEF", "DEYS", "GONAD", "HADJ", "KHAT",
+                        "MIRS","MOATED","MOTIVE","QUOTE","SIXTH","SWIVET",
+                        "TOP", NULL };
+
+    assert_eq(valid_solution(solution_correct, words), true);
+
+    assert_eq(valid_solution(solution_wrong1, words), false);
+}
+
 void test_update() {
     board_t board = { "G...W", ".....", ".....", ".....", "K...C" };
     letter_mask_t masks[NUM_LETTERS];
@@ -227,6 +239,7 @@ void run_part_b() {
   run_test(test_solve_easy);
   run_test(test_solve_medium);
   run_test(test_solve_hard);
+  run_test(test_valid_challenge_solution);
   run_test(test_solve_challenge);
 
   if (tests_failed == 0) {

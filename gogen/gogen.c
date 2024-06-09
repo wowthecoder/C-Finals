@@ -97,10 +97,11 @@ bool valid_solution(board_t board, char **words) {
             appeared[ch - 'A'] = ch;
         }
     }
+
     // 2nd condition: all words in board
-    while (*words != NULL) {
+    for (int i = 0; words[i] != NULL; i++) {
         // for the current word, do this:
-        char *curr = *words;
+        char *curr = words[i];
         // store position of prev character
         int r_prev = -1, c_prev = -1;
         // *curr is the current char
@@ -110,14 +111,13 @@ bool valid_solution(board_t board, char **words) {
             if (!found) {
                 return false;
             }
-            if (r_prev != -1 && c_prev != -1 && abs(r_prev - r_curr) > 1 && abs(c_prev - c_curr) > 1) {
+            if (r_prev != -1 && c_prev != -1 && (abs(r_prev - r_curr) > 1 || abs(c_prev - c_curr) > 1)) {
                 return false;
             }
             r_prev = r_curr;
             c_prev = c_curr;
             curr++;
         }
-        words++;
     }
     return true;
 }
@@ -151,7 +151,69 @@ void update(board_t board, letter_mask_t masks[NUM_LETTERS]) {
 }
 
 // ################################ QUESTION 4 ################################
+static int num_free_masks(letter_mask_t masks[NUM_LETTERS]) {
+    int count = 0;
+    for (int i = 0; i < NUM_LETTERS; i++) {
+        if (is_free_letter(masks[i])) {
+            count++;
+        }
+    }
+    return count;
+}
+
 bool solve_board(board_t board, char **words) {
+    // step 1: initialise masks for every letter
+    letter_mask_t masks[NUM_LETTERS];
+    for (int i = 0; i < NUM_LETTERS; i++) {
+        set_all_bits(&masks[i], true);
+    }
+    update(board, masks);
+
+    // step 2: refine masks until no more decrease in number of free letters
+    int prev_free_masks = 26;
+    while (num_free_masks(masks) < prev_free_masks) {
+        prev_free_masks = num_free_masks(masks);
+        for (int i = 0; words[i] != NULL; i++) {
+            char *curr = words[i];
+            while (*curr != 0) {
+                char prev = *curr++;
+                if (*curr != 0) {
+                    intersect_neighbourhoods(&masks[prev - 'A'], &masks[*curr - 'A']);
+                    update(board, masks);
+                }
+            }
+        }
+    }
+
+    // step 3: guess and backtracking and pray that you get a solution
+    if (valid_solution(board, words)) {
+        // print_board(board);
+        // printf("The words are: \n");
+        // print_words(words);
+        return true;
+    }
+    for (int j = 0; j < NUM_LETTERS; j++) {
+        if (is_free_letter(masks[j])) {
+            // try to fix a possible position for this letter
+            for (int r = 0; r < HEIGHT; r++) {
+                for (int c = 0; c < WIDTH; c++) {
+                    if (get_bit_value(masks[j], r, c)) {
+                        board_t boardb4;
+                        copy_board(boardb4, board);
+                        board[r][c] = 'A' + j;
+                        if (solve_board(board, words)) {
+                            return true;
+                        }
+                        // reset the board
+                        copy_board(board, boardb4);
+                    }
+                }
+            }
+            // if all positions exhausted, there is no solution
+            return false;
+        }
+    }
+    // basically won't reach here but wtv
     return false;
 }
 
