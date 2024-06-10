@@ -336,6 +336,7 @@ void test_shoot() {
         assert_eq(laser.row, 9);
         assert_eq(laser.col, 31);
         assert_true(!strcmp(laser.msg, "BISCUIT"));
+        printf("The laser msg is %s\n", laser.msg);
 
         // Check board was traced
         assert_eq(board.cells[2][2], '-');

@@ -145,7 +145,31 @@ char step_laser(board_t board, laser_state_t *laser) {
 
 bool shoot(board_t board, laser_state_t *laser, bool trace) {
     assert(is_on_board(board, laser->row, laser->col));
-    return false;
+
+    char curr = board.cells[laser->row][laser->col];
+    if (strchr(BLOCKERS, curr) != NULL) { // if it starts with a blocker, go next step
+        curr = step_laser(board, laser);
+    }
+
+    while (strchr(BLOCKERS, curr) == NULL) {
+        if (trace && strchr(PASSTHROUGHS, curr) != NULL) {
+            direction_t d = laser->direction;
+            char tr = ' ';
+            if (d == EAST || d == WEST) {
+                tr = '-';
+            } else {
+                tr = '|';
+            }
+            // check if current cell already has a trace
+            if ((curr == '-' && tr == '|') || (curr == '|' && tr == '-')) {
+                board.cells[laser->row][laser->col] = '+';
+            } else {
+                board.cells[laser->row][laser->col] = tr;
+            }
+        }
+        curr = step_laser(board, laser);
+    }
+    return curr == END;
 }
 
 bool solve(board_t board, laser_state_t laser, const char target[MAX_MSG_LEN]) {
